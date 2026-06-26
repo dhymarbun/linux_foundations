@@ -1,5 +1,4 @@
-# Lab 001 — Deploy Node-01
-
+# Lab 001 — Deploying Ubuntu Server into my old ASUS
 ## Objective
 
 Deploy a dedicated Ubuntu Server that will act as the primary Linux server for my cybersecurity homelab.
