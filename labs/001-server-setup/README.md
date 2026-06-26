@@ -1,61 +1,69 @@
-# Lab 001 — Deploying Ubuntu Server into my old ASUS
+# Lab 001 - Ubuntu Server Deployment
+
 ## Objective
 
-Deploy a dedicated Ubuntu Server that will act as the primary Linux server for my cybersecurity homelab.
+Deploy an Ubuntu Server to serve as the first node of my cybersecurity homelab.
 
 ---
 
 ## Environment
 
-**Operating System**
-
-Ubuntu Server 24.04.4 LTS
-
-**Hardware**
-
-* ASUS VivoBook X441B
-* AMD A4-9125
-* 4 GB RAM
-* 256 GB SSD
+| Component | Value |
+|-----------|-------|
+| OS | Ubuntu Server 24.04.4 LTS |
+| Host | ASUS VivoBook X441B |
+| CPU | AMD A4-9125 |
+| RAM | 10 GB |
+| Access | SSH |
 
 ---
 
-## Activities
+## Steps Performed
 
-* Installed Ubuntu Server
-* Configured network connectivity
-* Updated installed packages
-* Installed OpenSSH Server
-* Connected remotely from Kali Linux
-* Performed initial service enumeration
+1. Installed Ubuntu Server.
+2. Connected the server to the local network.
+3. Enabled OpenSSH Server.
+4. Verified SSH was listening on TCP port 22.
+5. Connected remotely from a Kali Linux workstation.
+6. Verified the service externally using Nmap.
 
 ---
 
 ## Validation
 
-Verified remote connectivity using:
+### Network
 
-* SSH
-* Nmap
-* ss
-* ping
+![Network](screenshots/network.png)
 
-Observed that only TCP port 22 (SSH) was exposed externally.
+---
+
+### SSH Service
+
+![SS](screenshots/ss.png)
+
+---
+
+### External Verification
+
+![Nmap](screenshots/nmap.png)
+
+---
+
+### Remote Login
+
+![SSH](screenshots/ssh.png)
 
 ---
 
 ## Lessons Learned
 
-* Difference between internal (`ss`) and external (`nmap`) service visibility.
-* Importance of establishing a baseline after deploying a server.
-* Basic Linux networking and remote administration.
-* Initial troubleshooting of Ubuntu Server installation and networking.
+- Difference between internal (`ss`) and external (`nmap`) service verification.
+- Difference between listening sockets and firewall exposure.
+- Basic SSH remote administration.
+- Ubuntu Server networking fundamentals.
 
 ---
 
-## Next Steps
+## Status
 
-* Configure SSH key authentication
-* Harden SSH configuration
-* Configure UFW
-* Begin Linux filesystem exploration
+✅ Successful
