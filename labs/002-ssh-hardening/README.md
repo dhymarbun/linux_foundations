@@ -1,20 +1,30 @@
 # Lab 002 - SSH Hardening & Public Key Authentication
-27/06/2026 
 
 ## Objective
 
-The goal of this lab was to understand how SSH authentication works, migrate from password-based authentication to public key authentication, and safely harden an Ubuntu Server without losing remote access.
+The objective of this lab was to understand how SSH authentication works, configure SSH public key authentication, and harden an Ubuntu Server by disabling password-based authentication after verifying secure key-based access.
 
 ---
 
 # Environment
 
-| Component      | Description                         |
-| -------------- | ----------------------------------- |
-| Client         | Kali Linux                          |
-| Server         | Ubuntu Server 24.04 LTS             |
-| Authentication | ED25519 SSH Key                     |
-| Connection     | Local Network (Private IP Redacted) |
+| Component      | Description             |
+| -------------- | ----------------------- |
+| Client         | Kali Linux              |
+| Server         | Ubuntu Server 24.04 LTS |
+| Authentication | ED25519 SSH Key Pair    |
+| Network        | Private Local Network   |
+
+---
+
+# Skills Demonstrated
+
+* Linux System Administration
+* SSH Administration
+* SSH Key Management
+* Linux Configuration
+* Authentication Troubleshooting
+* Security Hardening
 
 ---
 
@@ -22,67 +32,67 @@ The goal of this lab was to understand how SSH authentication works, migrate fro
 
 ## Linux Filesystem
 
-Common directories used throughout the lab:
-
-| Directory  | Purpose                        |
-| ---------- | ------------------------------ |
-| `/etc`     | System configuration files     |
-| `/home`    | User home directories          |
-| `/var/log` | System and authentication logs |
-| `/bin`     | Essential binaries             |
-| `/tmp`     | Temporary files                |
+| Directory  | Purpose                    |
+| ---------- | -------------------------- |
+| `/etc`     | System configuration files |
+| `/home`    | User home directories      |
+| `/var/log` | System logs                |
+| `/bin`     | Essential binaries         |
+| `/tmp`     | Temporary files            |
 
 ---
 
-## SSH Client vs SSH Server
+## SSH Architecture
 
 ### SSH Client
 
-The SSH client initiates a remote connection to another machine.
+The SSH client initiates a connection to a remote machine.
 
-### SSH Server (sshd)
+### SSH Server (`sshd`)
 
-The SSH daemon waits for incoming connections, authenticates clients, and grants remote access.
+The SSH daemon listens for incoming connections, authenticates clients, and provides remote shell access.
 
 ---
 
-## Password Authentication
+## Authentication Methods
 
-The client authenticates using a username and password.
+### Password Authentication
 
-Advantages:
+Authentication is performed using a username and password.
 
-* Easy to configure.
+**Advantages**
 
-Disadvantages:
+* Simple to configure.
 
-* Vulnerable to brute-force attacks.
+**Disadvantages**
+
+* Susceptible to brute-force attacks.
 * Password reuse.
-* Weak passwords.
+* Weak password policies.
 
 ---
 
-## Public Key Authentication
+### Public Key Authentication
 
-Instead of proving knowledge of a password, the client proves ownership of a private key.
+Authentication is performed using asymmetric cryptography.
 
-### Private Key
+Private key:
 
-Stored only on the client machine.
-
-```
+```text
 ~/.ssh/id_ed25519
 ```
 
-### Public Key
+Stored only on the client.
 
-Copied to the server and stored inside:
+Public key:
 
-```
+```text
 ~/.ssh/authorized_keys
 ```
 
-This allows the server to verify the client without ever receiving the private key.
+Stored on the server.
+
+The private key never leaves the client machine.
 
 ---
 
@@ -90,41 +100,47 @@ This allows the server to verify the client without ever receiving the private k
 
 ## Problem
 
-SSH connections always requested a password.
+SSH authentication always prompted for a password.
+
+---
 
 ## Hypothesis
 
-The client did not possess a valid SSH private key.
+The client machine did not possess a valid SSH private key.
+
+---
 
 ## Evidence
 
-Verbose SSH output (`ssh -v`) showed:
+Verbose SSH output showed:
 
-```
+```text
 Trying private key...
 type -1
 Next authentication method: password
 ```
 
-The SSH client attempted to use a private key but could not find one in the default location.
+This indicated that the SSH client attempted public key authentication but could not locate a valid private key.
+
+---
 
 ## Root Cause
 
-No ED25519 private key existed on the Kali client.
+No ED25519 SSH key pair existed on the Kali client.
 
 ---
 
 # Implementation
 
-## Generate a New SSH Key Pair
+## Generate an ED25519 Key Pair
 
 ```bash
 ssh-keygen -t ed25519
 ```
 
-Generated:
+Generated files:
 
-```
+```text
 ~/.ssh/id_ed25519
 ~/.ssh/id_ed25519.pub
 ```
@@ -137,9 +153,9 @@ Generated:
 ssh-copy-id username@192.168.x.x
 ```
 
-The command copied the public key into:
+The public key was copied to:
 
-```
+```text
 ~/.ssh/authorized_keys
 ```
 
@@ -153,15 +169,13 @@ on the Ubuntu server.
 ssh -v username@192.168.x.x
 ```
 
-Evidence:
+Successful authentication:
 
-```
+```text
 Offering public key
 Server accepts key
 Authenticated using "publickey"
 ```
-
-This confirmed that password authentication was no longer required.
 
 ---
 
@@ -169,13 +183,13 @@ This confirmed that password authentication was no longer required.
 
 Modified:
 
-```
+```text
 /etc/ssh/sshd_config
 ```
 
 Changed:
 
-```
+```text
 PasswordAuthentication no
 ```
 
@@ -185,13 +199,13 @@ Validate configuration:
 sudo sshd -t
 ```
 
-Apply changes safely:
+Reload the SSH daemon:
 
 ```bash
 sudo systemctl reload ssh
 ```
 
-A new SSH session was opened to verify successful authentication before closing the existing session.
+A second SSH session was opened to verify successful authentication before closing the original session.
 
 ---
 
@@ -226,6 +240,7 @@ Examples:
 ```bash
 find /etc -name sshd_config
 grep PasswordAuthentication /etc/ssh/sshd_config
+grep -v '^#' /etc/ssh/sshd_config
 ```
 
 ---
@@ -252,47 +267,43 @@ sudo systemctl reload ssh
 
 # Verification Checklist
 
-* [x] Generated an ED25519 SSH key pair.
-* [x] Installed the public key on the Ubuntu server.
-* [x] Verified SSH public key authentication.
-* [x] Disabled password authentication.
-* [x] Validated SSH configuration.
-* [x] Reloaded the SSH daemon successfully.
-* [x] Confirmed successful login without a password.
+* [x] Generated an ED25519 SSH key pair
+* [x] Installed the public key on the Ubuntu server
+* [x] Verified successful public key authentication
+* [x] Disabled password authentication
+* [x] Validated the SSH configuration
+* [x] Reloaded the SSH daemon safely
+* [x] Successfully logged in without using a password
 
 ---
 
 # Screenshots
 
-Include the following screenshots:
+The following screenshots are included with this lab:
 
-1. Successful SSH authentication using a public key.
-2. `PasswordAuthentication no` inside `sshd_config`.
-3. `sudo sshd -t` validation.
-4. `ls ~/.ssh` showing the generated key pair.
-5. Successful SSH login without a password prompt.
+| Screenshot       | Description                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| `generated_keys` | Generated ED25519 SSH key pair in the client's `~/.ssh` directory.                                 |
+| `publickey`      | Successful SSH authentication using public key authentication (`Authenticated using "publickey"`). |
+| `sshd_config`    | SSH server configuration showing `PasswordAuthentication no`.                                      |
+| `config_valid`   | Validation of the SSH configuration using `sudo sshd -t` before reloading the SSH daemon.          |
 
-Sensitive information has been intentionally redacted from screenshots, including:
-
-* Private IP addresses
-* SSH fingerprints
-* Public key contents
-* Personal hostnames (optional)
+> **Note:** Sensitive information such as private IP addresses, SSH fingerprints, usernames, and key contents has been redacted from the screenshots.
 
 ---
 
 # Lessons Learned
 
-This lab emphasized investigation before modification.
+This lab emphasized the importance of investigating before modifying a production service.
 
-The workflow followed throughout the exercise was:
+The workflow followed throughout the lab was:
 
 1. Investigate
 2. Form a hypothesis
-3. Collect evidence
+3. Gather evidence
 4. Identify the root cause
 5. Implement the solution
 6. Validate the configuration
-7. Verify the final result
+7. Verify the result
 
-Rather than relying on trial and error, each configuration change was supported by evidence gathered from the system. This approach minimizes configuration mistakes and reflects real-world Linux system administration and cybersecurity practices.
+Using this workflow helps reduce configuration mistakes and reflects best practices in Linux system administration and cybersecurity.
